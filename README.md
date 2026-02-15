@@ -180,9 +180,9 @@ If you use this code in your research, please cite:
 ```bibtex
 @software{differentiable_cosmology,
   title = {Differentiable Cosmology: The Inverse Universe},
-  author = {Your Name},
+  author = {Jamil Khan},
   year = {2026},
-  url = {https://github.com/yourusername/differentiable-cosmology}
+  url = {https://github.com/Viverun/differentiable-cosmology}
 }
 ```
 
