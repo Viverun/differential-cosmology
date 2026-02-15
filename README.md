@@ -1,15 +1,3 @@
-Great idea. A strong `README.md` sets the tone and makes the project *real* to anyone (including future-you).
-
-Below is a **comprehensive but clean README** you can paste directly into `README.md`.
-It’s written to work for:
-
-* you right now,
-* potential collaborators,
-* and future reviewers (academic or industry).
-
----
-
-```markdown
 # Differentiable Cosmology: The Inverse Universe
 
 This project explores **differentiable cosmology**: treating the formation of large-scale structure in the universe as a *differentiable forward model*, enabling gradient-based reconstruction of the universe’s initial conditions from late-time observations.
@@ -194,4 +182,3 @@ Details are documented in `docs/validation.md`.
 
 This project is released under the MIT License.
 
-```
