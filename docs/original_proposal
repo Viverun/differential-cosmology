@@ -1,0 +1,200 @@
+# *Differentiable Cosmology: Inverse Universe*
+
+Fantastic brief — below is a clear, actionable project overview and scope you can use as a blueprint (proposal, README, or project spec). I avoid prescriptive calendar dates and instead give phased sequencing with **relative effort** and concrete deliverables so you can adapt the timeline to your resources.
+
+---
+
+## Project summary (elevator pitch)
+
+Build an end-to-end differentiable cosmology pipeline that treats a cosmological forward model (initial density → evolved matter → mock observations) as a differentiable function, and uses gradient-based and learned inference to reconstruct posterior samples or MAP estimates of the initial conditions conditioned on observed structure. The aim is to demonstrate practical field-level inversion at progressively realistic scales and produce open, reproducible code + diagnostics.
+
+Key novel value: combine modern autodiff stacks and ML samplers with scalable simulation and observation realism to make inverse cosmology practical and reusable.
+
+---
+
+## High-level objectives
+
+- Implement a **differentiable forward model** (PM-based; extendable to hydro) with autodiff-friendly ops.
+- Demonstrate **field-level reconstruction** (MAP + approximate posterior) from mock observations with controlled systematics.
+- Develop **efficient inference** workflows: gradient-based MAP, gradient-informed MCMC, and amortized samplers (flows / score models).
+- Provide **robust validation** (power spectrum, cross-correlation, posterior coverage) and open reproducible artifacts: notebooks, configs, and a benchmark dataset.
+- Produce a clear path to scale (HPC / multi-GPU) and to incorporate observational complexities (masks, bias, RSD).
+
+---
+
+## Scope — what’s in / out
+
+In scope (core):
+
+- Differentiable particle-mesh forward solver and adjoint/backprop strategy using an autodiff framework (example implementations available in the ecosystem such as JAX).
+- Simple galaxy-observation forward model: halo occupation / Poisson sampling, survey mask, noise model, redshift-space distortions (RSD) approximations.
+- Gradient-based MAP reconstruction of the initial Gaussian field, including prior on power spectrum.
+- One amortized posterior method (normalizing flow or score model) trained on simulated forward runs.
+- Code, unit tests, notebooks, and a small benchmark (2D toy + modest 3D box).
+
+Out of scope (for MVP):
+
+- Full hydrodynamics / baryonic feedback realism (plausible extension later).
+- Complete HPC productionization for petabyte surveys (design included; implementation left for follow-up).
+- Full end-to-end telescope pipeline integration (alerts/observatory ops).
+
+---
+
+## Key deliverables
+
+1. **MVP codebase** (public repo): toy 2D differentiable PM, reconstruction scripts, and notebooks.
+2. **3D prototype**: small 3D differentiable PM pipeline + MAP reconstructions on mock survey realizations.
+3. **Inference module(s)**: MAP optimizer + at least one posterior sampler (flow or score).
+4. **Validation suite & metrics**: power spectrum recovery, cross-correlation with ground-truth, posterior coverage tests.
+5. **Documentation & reproducible notebook**: step-by-step tutorial that runs in Colab or small GPU.
+6. **Project report**: methodology, experiments, limitations, suggested next steps.
+
+---
+
+## Phases (sequenced; relative effort: Low / Medium / High)
+
+**Phase 0 — Setup & study (Low)**
+
+- Goals: environment, literature & repo scan, baseline references.
+- Outputs: repo skeleton, dev env (JAX/PyTorch), small framework of CI & data loaders.
+
+**Phase 1 — 2D toy differentiable experiment (Low → Medium)**
+
+- Goals: implement toy PM in 2D, verify autodiff gradients, reconstruct known initial seeds by gradient descent.
+- Outputs: runnable notebook, diagnostic plots (loss trajectory, recovered field, PS comparison).
+
+**Phase 2 — 3D differentiable PM + observation model (Medium → High)**
+
+- Goals: adopt or reimplement a small 3D PM (useable libraries such as FlowPM/JaxPM as references), add halo/galaxy model, mask & noise, and test MAP reconstruction on mock surveys.
+- Outputs: MAP pipeline, validation metrics for 3D box.
+
+**Phase 3 — Posterior sampling & ML samplers (High)**
+
+- Goals: implement gradient-informed MCMC for smaller dims; train a conditional normalizing flow or score-based model to produce posterior samples conditioned on observations.
+- Outputs: sampler code, coverage/uncertainty evaluation, runtime and scaling analysis.
+
+**Phase 4 — Scale & observational realism (High, follow-up)**
+
+- Goals: increase resolution, incorporate more realistic systematics (photo-z errors, survey selection, baryons), HPC multi-GPU sharding and checkpointing, documentation for production runs.
+- Outputs: scaling guide, production configs, suggestions for HPC allocation.
+
+---
+
+## Technical architecture (component breakdown)
+
+1. **Front-end orchestration**
+    - CLI / experiment runner, config files (yaml), reproducible seeds, logging & checkpoints.
+2. **Differentiable forward model**
+    - Initial random field generator (Gaussian RF with parametric power spectrum).
+    - PM integrator implemented in autodiff framework with checkpointing/adjoint options. (Reference implementations exist — see ecosystem).
+    - Light halo occupation / galaxy sample mapper + observational operator (mask, RSD, noise).
+3. **Inference layer**
+    - MAP optimizer (Adam/LBFGS w/ gradient preconditioning).
+    - Gradient-informed MCMC (HMC / NUTS with preconditioning) for small scale tests.
+    - Amortized sampler: conditional flows or score models.
+4. **I/O & data utilities**
+    - Synthetic data generator and small public benchmark dataset (packaged).
+    - Lightweight interface to real catalogs for future work (e.g., SDSS / DES style).
+5. **Validation & visualization**
+    - PS/2PCF comparisons, cross-correlation, posterior diagnostics (rank histograms), and reproducible plots.
+6. **Compute & optimization utilities**
+    - Checkpointing, adjoint/reversible integration toggles, vmap/pmap hooks, multi-GPU support roadmap.
+
+---
+
+## Data sources and synthetic dataset
+
+- **Synthetic**: Gaussian initial seeds → PM evolution → halo sampling (HOD) → survey mask/noise. Provide a small suite of seeds and observation realizations for benchmarking.
+- **Public real catalogs (future)**: links to observed surveys for real-data experiments (e.g., SDSS / DES) — treat as downstream integration after validation.
+
+(If you want, I can add explicit dataset names and entity references for public surveys.)
+
+---
+
+## Compute & infra guidance (practical)
+
+- Development: laptop + single GPU for toy 2D and small 3D.
+- Mid-scale experiments: 1–8 GPUs (A100/80GB preferred for larger 3D boxes) with good CPU for FFTs.
+- Production-level: multi-node HPC or cloud TPU/GPU with sharding/parallel FFT strategy.
+- Must include checkpointing & recomputation/adjoint options to trade memory vs compute.
+
+---
+
+## Validation metrics & success criteria
+
+- **Field-level reconstruction**: cross-correlation coefficient r(k) between true and reconstructed initial fields (goal: high r at scales targeted).
+- **Power-spectrum recovery**: fractional error in P(k) across wavenumbers in range of interest.
+- **Posterior coverage**: rank histograms / PIT tests showing calibrated uncertainties.
+- **Runtime / resource**: realistic runtime and memory metrics for each stage; ability to run toy end-to-end on a single GPU.
+- **Reproducibility**: notebook runs and reproduces published figures.
+
+---
+
+## Risks & mitigations
+
+- **Memory blow-up when backpropagating through time loops**
+    
+    *Mitigation:* implement reversible symplectic integrators and/or adjoint recomputation checkpointing; use chunked time-stepping.
+    
+- **Model mismatch (bias due to simplistic observational model)**
+    
+    *Mitigation:* progressively add observational complexities; include flexible nuisance parameters and marginalize them.
+    
+- **Posterior sampling in very high dim is infeasible**
+    
+    *Mitigation:* focus on MAP & amortized inference; test MCMC on reduced-dim subspaces; evaluate Laplace approximations.
+    
+- **Baryons / subgrid physics break small-scale reconstructions**
+    
+    *Mitigation:* restrict target scales, use emulator or marginalized nuisance models for baryonic effects.
+    
+
+---
+
+## Team & roles (recommended for scaling)
+
+- **Lead/Principal (1)** — scientific lead: cosmology priors, model choices, paper/report author.
+- **Implementation engineer (1–2)** — JAX/PyTorch implementation, performance tuning, adjoint/checkpointing.
+- **ML researcher (1)** — amortized samplers, probabilistic models, flows/score networks.
+- **Data/validation engineer (0–1)** — dataset pipeline, synthetic generation, metrics.
+- **Optional collaborator(s)** — observational astronomer(s) for survey realism and access to catalog expertise.
+
+For a solo developer (you), start as Implementation engineer + ML researcher and scope down experiments.
+
+---
+
+## Deliverable structure & repo layout (suggested)
+
+- `README.md` (project overview + quickstart)
+- `notebooks/` (toy 2D, 3D demo, inference demo)
+- `src/forward/` (initial field + PM integrator)
+- `src/infer/` (MAP, samplers, amortized models)
+- `data/` (small benchmark seeds & configs)
+- `docs/` (validation, architecture, scaling notes)
+- `ci/` (unit tests for small kernels, basic end-to-end smoke tests)
+
+---
+
+## Immediate next steps (what you can do *right now*)
+
+1. Create the repo skeleton with the layout above and a `CONTRIBUTING.md`.
+2. Implement Phase 0: minimal 2D toy generator + small PM integrator skeleton (single file notebook).
+3. Run a sanity check: generate a seed → evolve forward → attempt gradient-based reconstruction on the same machine. Produce a plot showing target vs recovered.
+4. Open a short issue board with milestone Phase 1/2 goals and required compute resources.
+
+---
+
+## Extensions & long-term opportunities
+
+- Replace PM with differentiable hydrodynamics module for baryonic realism.
+- Integrate with established field-level frameworks (e.g., a production BORG-style pipeline).
+- Collaborate with survey teams to apply to real data and joint constraints on cosmological parameters.
+
+---
+
+If you’d like, I can now:
+
+- generate the **repo skeleton** + `toy_2d_recon.ipynb` scaffold you can run in Colab, or
+- produce a **detailed experiment spec** for Phase 2 with exact hyperparameter suggestions, diagnostics, and validation scripts.
+
+Which do you want me to produce next?
