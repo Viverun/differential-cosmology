@@ -3,19 +3,20 @@
 import jax.numpy as jnp
 from typing import Tuple
 
+
 def compute_k_values(grid_shape: Tuple[int, ...]) -> jnp.ndarray:
     """Compute wavenumber array for FFT.
-    
+
     Parameters
     ----------
     grid_shape : tuple of int
         Shape of the grid (N,) for 1D, (N, N) for 2D, (N, N, N) for 3D
-    
+
     Returns
     -------
     k_values : jnp.ndarray
         Wavenumber magnitudes, same shape as grid_shape
-    
+
     Examples
     --------
     >>> k = compute_k_values((64, 64))
@@ -23,10 +24,7 @@ def compute_k_values(grid_shape: Tuple[int, ...]) -> jnp.ndarray:
     (64, 64)
     """
     ndim = len(grid_shape)
-    k_components = jnp.meshgrid(
-        *[jnp.fft.fftfreq(n, d=1.0/n) for n in grid_shape],
-        indexing='ij'
-    )
+    k_components = jnp.meshgrid(*[jnp.fft.fftfreq(n, d=1.0 / n) for n in grid_shape], indexing="ij")
     k_squared = sum(k**2 for k in k_components)
     return jnp.sqrt(k_squared)
 
