@@ -1,184 +1,227 @@
 # Differentiable Cosmology: The Inverse Universe
 
-This project explores **differentiable cosmology**: treating the formation of large-scale structure in the universe as a *differentiable forward model*, enabling gradient-based reconstruction of the universe’s initial conditions from late-time observations.
+> 🚧 **Early Development** — 2D toy implementation in progress
 
-Instead of repeatedly guessing initial conditions and simulating forward, we **optimize and infer** the early-universe density field directly by backpropagating through a cosmological simulation—much like training a neural network, but where the “weights” are primordial density fluctuations.
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ---
 
-## Motivation
+```
+┌─────────────────────────────────────────────────────────────┐
+│                                                             │
+│   [Placeholder: Workflow diagram or example comparison]    │
+│                                                             │
+│   Initial Field → Forward Evolution → Observations          │
+│                         ↓                                   │
+│              Backprop & Reconstruct ←                       │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
 
-Traditional cosmological inference works forward:
-> assume initial conditions → simulate → compare to observations
+## What This Does
 
-This project inverts that logic:
-> observe the universe today → differentiate through the simulation → infer the initial conditions
+**Differentiable cosmology** treats the universe's evolution as a differentiable function, enabling gradient-based inference of initial conditions from observations.
 
-Why this matters:
-- Enables **field-level inference**, not just summary statistics
-- Makes **gradient-based optimization and sampling** possible
-- Bridges modern ML (autodiff, probabilistic inference) with physical simulation
-- Opens the door to faster, more expressive cosmological analyses
+**Traditional approach:**  
+Guess initial conditions → simulate forward → compare to data → repeat millions of times
+
+**This project:**  
+Observe the universe → backpropagate through simulation → infer initial conditions directly
+
+Think of it as training a neural network where the "weights" are the primordial density fluctuations of the early universe.
+
+---
+
+## Why This Matters
+
+- 🎯 **Field-level inference** — reconstruct full density fields, not just summary statistics
+- 📈 **Gradient-based optimization** — orders of magnitude faster than forward sampling
+- 🧠 **Modern ML meets physics** — brings autodiff and learned samplers to cosmology
+- 🔬 **Better science** — richer constraints on cosmological parameters and uncertainties
+
+---
+
+## Quick Start
+
+### Installation
+
+```bash
+# Requirements: Python 3.9+, JAX
+git clone https://github.com/yourusername/differentiable-cosmology.git
+cd differentiable-cosmology
+pip install -e .
+```
+
+### Run the 2D Toy Example
+
+```bash
+python scripts/run_toy_2d.py
+```
+
+**Expected output:** Plots showing forward evolution and gradient-based reconstruction of initial density field.
+
+### Interactive Notebooks
+
+Explore step-by-step:
+- `notebooks/00_toy_2d_forward.ipynb` — Generate and evolve initial conditions
+- `notebooks/01_toy_2d_inverse.ipynb` — Reconstruct via gradient descent
+
+---
+
+## Key Features
+
+- ✅ Differentiable particle-mesh (PM) simulation (2D complete, 3D in progress)
+- ✅ Gaussian random field initial conditions with power spectrum priors
+- ✅ Simple observation models (noise, masking, selection effects)
+- ✅ MAP inference via gradient-based optimization
+- 🚧 Posterior sampling with learned models (flows/score-based)
+- 🚧 3D realistic volumes and survey realism
 
 ---
 
 ## Project Goals
 
-- Build a **differentiable cosmological forward model** (toy → realistic)
-- Perform **gradient-based MAP reconstruction** of initial density fields
-- Explore **posterior inference** using gradient-informed and learned samplers
-- Provide **clear validation metrics** and reproducible experiments
-- Produce clean, extensible, open-source code
-
----
-
-## Project Scope
-
-### In scope
-- 2D and small 3D differentiable particle-mesh (PM) simulations
-- Gaussian random field initial conditions with power-spectrum priors
-- Simple observational forward models (noise, masks, selection)
-- MAP inference via gradient-based optimization
-- One amortized posterior method (e.g. normalizing flows or score models)
-- Reproducible notebooks and validation plots
-
-### Out of scope (for now)
-- Full hydrodynamics / baryonic feedback realism
-- Production-scale survey pipelines
-- Petabyte-scale simulations
+1. Build a **differentiable cosmological forward model** (toy → realistic scales)
+2. Demonstrate **gradient-based MAP reconstruction** of initial density fields
+3. Enable **posterior inference** using gradient-informed and amortized samplers
+4. Provide **reproducible experiments** with clear validation metrics
+5. Produce **extensible open-source tools** for the community
 
 ---
 
 ## Repository Structure
 
 ```
-
 differentiable-cosmology/
-│
-├── notebooks/        # Interactive demos & experiments
-│   ├── 00_toy_2d_forward.ipynb
-│   ├── 01_toy_2d_inverse.ipynb
-│   └── utils.ipynb
-│
-├── src/diffcosmo/    # Core library code
-│   ├── fields.py    # Initial density fields & priors
-│   ├── pm.py        # Differentiable PM evolution
-│   ├── observe.py   # Observation models
-│   ├── loss.py      # Likelihoods and priors
-│   ├── inference.py # MAP & sampling methods
-│   └── utils.py
-│
-├── data/             # Small synthetic data only
-│   └── toy/
-│       ├── config.yaml
-│       └── seeds/
-│
+├── notebooks/        # Interactive demos
+├── src/diffcosmo/    # Core library (fields, PM solver, inference)
 ├── scripts/          # CLI entry points
-│   └── run_toy_2d.py
-│
-├── docs/             # Design & validation notes
-│   ├── overview.md
-│   └── validation.md
-│
-├── pyproject.toml
-├── README.md
-└── LICENSE
-
-````
-
----
-
-## Methodology Overview (High-Level)
-
-1. **Initial Conditions**  
-   Generate a Gaussian random density field with a specified power spectrum.
-
-2. **Forward Evolution**  
-   Evolve the field forward in time using a differentiable particle-mesh solver.
-
-3. **Observation Model**  
-   Convert the evolved matter field into mock observations (noise, masking).
-
-4. **Inference**  
-   - Compute a loss (likelihood + priors)
-   - Backpropagate gradients through the entire simulation
-   - Optimize initial conditions (MAP) or sample posteriors
-
-5. **Validation**  
-   Compare reconstructed and true fields using power spectra, correlations, and uncertainty diagnostics.
-
----
-
-## Installation
-
-Create a virtual environment and install in editable mode:
-
-```bash
-pip install -e .
-````
-
-Dependencies are defined in `pyproject.toml`.
-
----
-
-## Quick Start (Toy 2D Example)
-
-Run the full forward + inverse pipeline from the command line:
-
-```bash
-python scripts/run_toy_2d.py
+├── data/             # Synthetic benchmark data
+├── docs/             # Detailed methodology and validation
+└── tests/            # Unit tests
 ```
 
-Or explore interactively:
-
-1. Open `notebooks/00_toy_2d_forward.ipynb`
-2. Generate and evolve an initial density field
-3. Open `notebooks/01_toy_2d_inverse.ipynb`
-4. Reconstruct the initial field using gradients
+See [`docs/architecture.md`](docs/architecture.md) for detailed structure.
 
 ---
 
 ## Validation & Success Criteria
 
-* High cross-correlation between true and reconstructed initial fields
-* Accurate recovery of the input power spectrum on targeted scales
-* Stable and interpretable optimization behavior
-* Reproducible results from notebooks and scripts
+We measure success through:
+- **Cross-correlation** between true and reconstructed initial fields (target: r > 0.9 on large scales)
+- **Power spectrum recovery** with <10% error on targeted wavenumbers
+- **Stable optimization** with interpretable loss curves
+- **Reproducibility** across different random seeds
 
-Details are documented in `docs/validation.md`.
+Full validation details: [`docs/validation.md`](docs/validation.md)
 
 ---
 
-## Current Status
+## Current Status & Roadmap
 
-🚧 **Early development**
+**✅ Phase 0: Setup**  
+Repository scaffolding, initial field generator, 2D forward model
 
-* Repository scaffolding complete
-* Initial density field generator implemented
-* Differentiable 2D evolution and inverse reconstruction in progress
+**🚧 Phase 1: 2D Toy (Current)**  
+Differentiable 2D PM, gradient-based reconstruction, validation
+
+**📋 Phase 2: 3D Realistic (Next)**  
+Small 3D volumes, observation models, MAP reconstruction
+
+**📋 Phase 3: Posterior Inference**  
+Gradient-informed MCMC, normalizing flows or score models
+
+**📋 Phase 4: Scale & Realism**  
+Larger volumes, baryonic physics, multi-GPU support
+
+---
+
+## Project Scope
+
+### In Scope
+- 2D and small 3D differentiable PM simulations
+- Gradient-based MAP reconstruction
+- At least one amortized posterior method
+- Reproducible experiments and validation
+
+### Out of Scope (for MVP)
+- Full hydrodynamics / baryonic feedback
+- Production-scale survey pipelines
+- Petabyte-scale simulations
+
+---
+
+## Use Cases & Audience
+
+**For cosmologists:** Tools for field-level inference and initial condition reconstruction
+
+**For ML researchers:** Physics-informed differentiable simulation as a testbed for learned inference
+
+**For students:** Hands-on introduction to inverse problems in cosmology
+
+**For engineers:** Scalable scientific software patterns (autodiff, checkpointing, multi-GPU)
+
+---
+
+## Documentation
+
+- [**Project Overview**](docs/overview.md) — Detailed methodology and architecture
+- [**Validation Guide**](docs/validation.md) — Metrics and success criteria
+- [**Contributing**](CONTRIBUTING.md) — How to contribute code or ideas
 
 ---
 
 ## Future Extensions
 
-* Larger 3D volumes and improved resolution
-* More realistic observation models
-* Learned posterior samplers (flows / score-based models)
-* Differentiable hydrodynamics
-* Application to real survey data
+- Larger 3D volumes at higher resolution
+- Differentiable hydrodynamics for baryonic realism
+- Application to real survey data (SDSS, DES, Euclid)
+- Joint inference of cosmological parameters and initial conditions
 
 ---
 
-## Intended Audience
+## Contributing
 
-* Computational cosmologists
-* Machine learning researchers interested in physics-informed ML
-* Scientific software engineers
-* Students exploring inverse problems in physics
+We welcome contributions! Areas where help is especially valuable:
+- Performance optimization (memory, speed)
+- Observation model realism
+- Posterior sampling methods
+- Documentation and tutorials
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+---
+
+## Citation
+
+If you use this code in your research, please cite:
+
+```bibtex
+@software{differentiable_cosmology,
+  title = {Differentiable Cosmology: The Inverse Universe},
+  author = {Your Name},
+  year = {2026},
+  url = {https://github.com/yourusername/differentiable-cosmology}
+}
+```
 
 ---
 
 ## License
 
-This project is released under the MIT License.
+This project is released under the [MIT License](LICENSE).
 
+---
+
+## Contact & Support
+
+- **Issues:** [GitHub Issues](https://github.com/yourusername/differentiable-cosmology/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/yourusername/differentiable-cosmology/discussions)
+- **Email:** your.email@example.com
+
+---
+
+## Acknowledgments
+
+This project builds on foundational work in differentiable simulation and field-level cosmology. Key inspirations include JAX-based cosmology tools (FlowPM, JaxPM) and field-level inference frameworks (BORG, ELUCID).
