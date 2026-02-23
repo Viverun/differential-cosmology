@@ -1,53 +1,78 @@
-# Simple explanation — *Differentiable Cosmology: The “Inverse” Universe* (plain language)
+# Simple explanation: Differentiable Cosmology in plain language
 
-Nice — here’s the whole plan translated into simple, non-technical language so you can explain it to a friend (or use it as a quick pitch).
+## One-line idea
 
-## What we’re trying to do (one-sentence)
+We want to look at the universe we observe today and reconstruct the likely initial matter pattern that created it.
 
-We want to build a system that can look at the universe as it is now (galaxies, maps, observations) and work backwards to figure out what the tiny ripples in the very early universe looked like — using math that lets us take derivatives through the whole simulation so we can “learn” the initial state.
+## The core intuition
 
-## Why that’s cool and useful
+Think of cosmic structure like ripples in water.
+At the beginning, the ripples are tiny.
+Over time, gravity amplifies them into filaments, clusters, and voids.
 
-* Instead of guessing initial conditions and forward-simulating millions of times, we use gradients to search directly for the initial pattern that best explains today.
-* This gives stronger, more detailed scientific answers about how the universe evolved, and better estimates of uncertainties (how sure we are).
-* It’s like training a giant neural network where the “weights” are the early-universe ripples.
+Traditional workflow is mostly:
 
-## What the project will build (simple parts)
+- guess an initial pattern
+- run a simulation forward
+- compare with observations
+- repeat, repeat, repeat
 
-1. **A differentiable simulator** — a physics engine you can compute derivatives through. This is the core: run the universe forward, but in a way that supports backtracking. We’ll use autodiff tools such as JAX for that.
-2. **An observation model** — fake how a telescope would see the simulated universe (add noise, masks, selection effects) so our comparisons are realistic.
-3. **An inference engine** — optimization and sampling tools that use gradients to find the best initial conditions and, ideally, samples from the probable set of initial conditions.
-4. **Validation & visuals** — tests and plots showing how well our reconstructed early universe matches the true one in simulations.
+This project keeps the simulation differentiable, so we can compute gradients and move the guess in a smarter direction instead of searching blindly.
 
-## How we’ll proceed (phases, in plain terms)
+## Why this matters
 
-* **Phase 1 (toy):** Start very small — 2D world, tiny grid. Make sure we can take gradients and recover the known initial pattern. This is a “proof of life.”
-* **Phase 2 (realistic-ish 3D):** Move to a small 3D volume, add a simple model for galaxies and how telescopes see them, then try to recover initial conditions for that mock survey.
-* **Phase 3 (posterior ideas):** Go beyond a single best guess: build methods that give many plausible early-universe maps (uncertainty quantification), using learned samplers or gradient-based sampling.
-* **Phase 4 (scale & realism):** Add more real-world complications (better galaxy models, observational quirks, baryonic physics) and scale up to bigger boxes / more compute.
+- You recover full spatial structure, not only a few summary numbers.
+- You can use optimization methods that are much more directed than brute-force trial and error.
+- You get a practical bridge between physics simulation and modern ML tooling.
 
-## What success looks like (plain checks)
+## What this system is made of
 
-* We can take a simulated universe, hide the initial state, and reconstruct it well enough that the reconstructed and true initial fields look and behave similarly (measured with simple stats like correlation and power spectra).
-* Our method runs end-to-end on a single GPU for the toy version and is documented so others can reproduce it.
-* We can show uncertainty estimates that are sensible (not overconfident).
+1. **Initial field generator**
+   It creates a plausible early-universe density map using a power-spectrum prior.
 
-## Big challenges (in normal words)
+2. **Forward physics model (PM-lite)**
+   It evolves that map forward in time with a differentiable particle-mesh style solver.
 
-* **Memory and compute:** Running a time-looped simulation and backpropagating through it uses a lot of memory. We’ll need tricks to recompute states or use reversible steps.
-* **Observational mess:** Real telescope data have gaps, errors, and selection quirks — if we ignore those, the reconstruction will be biased.
-* **Scale:** Doing full posterior sampling for a realistic volume is extremely expensive; we’ll focus on best-fit solutions and learned samplers instead of naive brute-force sampling.
+3. **Observation model**
+   It applies effects like masking and noise to imitate imperfect measurements.
 
-## What you (as a computer engineer & ML person) will actually do
+4. **Inference loop**
+   It compares prediction vs observation, computes loss and gradients, and updates the initial field.
 
-* Implement the differentiable simulator parts and make them fast and memory-efficient.
-* Design and train ML samplers / flows or use gradient-based optimizers for reconstruction.
-* Build pipelines and tooling so everything runs reproducibly and can later be scaled to many GPUs.
+5. **Diagnostics and validation**
+   It checks whether reconstruction improved using loss curves, cross-correlation, and power spectrum comparisons.
 
-## First three practical steps you can do today
+## What is already implemented here
 
-1. Make a small GitHub repo with the project structure (notebooks, src, data).
-2. Build the 2D toy notebook: create a random initial pattern, run a tiny simulator forward, then try to recover the initial pattern by gradient descent.
-3. Plot target vs reconstructed and write a short README describing what worked and what failed.
+This repository already has a working 2D MVP:
 
----
+- differentiable 2D PM-lite forward model
+- mask + Gaussian noise observation model
+- MAP reconstruction with gradient-based optimization
+- tests and an end-to-end toy pipeline (`scripts/run_toy_2d.py`)
+
+So this is not just a concept note; you can run it and inspect real outputs.
+
+## What comes next
+
+- extend robustly from 2D to 3D
+- improve realism of observation effects
+- move from one best-fit map (MAP) toward posterior sampling
+- scale experiments to stronger GPU setups
+
+## The hard parts (realistically)
+
+- **Numerical stability:** gradients can explode or become unstable if the pipeline is not carefully constrained.
+- **Memory pressure:** backpropagating through time-evolution is expensive.
+- **Model mismatch:** real observations are messy; simplistic assumptions can bias reconstruction.
+
+## Three practical moves you can make today
+
+1. Run the full toy pipeline and inspect the outputs.
+   `uv run --active python scripts/run_toy_2d.py --profile default`
+
+2. Open the notebooks and change one important knob (noise level, steps, or learning rate), then rerun.
+
+3. Write a short experiment note: what improved, what failed, and one hypothesis for why.
+
+That habit builds scientific progress much faster than random feature adding.

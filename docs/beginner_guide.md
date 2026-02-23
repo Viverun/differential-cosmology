@@ -82,96 +82,200 @@ For fuller definitions, see `docs/keywords.md`.
 
 ## Physics: What Is Being Modeled
 
-This project currently uses a **2D toy universe**, not a full production 3D cosmology pipeline.
+This project currently uses a **2D toy universe**. That is intentional:
+we start with a simplified but scientifically meaningful setup before moving to harder 3D realism.
 
-### 1. Initial fluctuations
+### 1. What “matter field” means
 
-The early universe is represented as a density fluctuation field. In Fourier space, its variance follows a power spectrum.
+We represent matter as a grid called a **density field**.
+Each cell says whether that location is denser or less dense than average.
 
-In code, we use a simple power-law form:
+A common quantity is density contrast:
+
+- `delta(x) = (rho(x) - rho_bar) / rho_bar`
+
+Interpretation:
+
+- `delta > 0`: overdense region (more matter than average)
+- `delta < 0`: underdense region (less matter than average)
+
+### 2. Why the power spectrum is used
+
+Instead of describing a field only in position space, we also look at **Fourier space** (scales/frequencies).
+The **power spectrum** tells us how much structure exists at each scale.
+
+In this toy MVP we use:
 
 - `P(k) = A * k^n`
 
 where:
 
-- `k` = spatial frequency (large `k` means smaller scales)
-- `A` = amplitude
-- `n` = slope/index
+- `k` controls scale (small `k` = large structures, large `k` = small structures)
+- `A` sets overall fluctuation strength
+- `n` controls how fast power changes across scales
 
-### 2. Gravitational evolution (PM-lite)
+This is a simplified prior, but it captures the core idea that structure is scale-dependent.
 
-We evolve the field using a particle-mesh style approximation:
+### 3. How gravity evolution is approximated here (PM-lite)
 
-- particles begin on a lattice
-- density is deposited onto a grid (CIC)
-- Poisson equation is solved in Fourier space
-- forces are computed as gradients of potential
-- particles are updated in small timesteps
-- final density field is read back from particles
+The code uses a Particle-Mesh style approximation with differentiable operations:
 
-This gives a differentiable forward operator suitable for inverse inference.
+1. Start particles on a regular lattice.
+2. Convert particle positions to grid density using CIC (Cloud-In-Cell).
+3. Solve for gravitational potential from density (Poisson equation in Fourier space).
+4. Compute forces from potential gradients.
+5. Move particles in small time steps.
+6. Convert particle distribution back to a final density field.
 
-### 3. Observation model
+Why this is physically useful:
 
-Real surveys are incomplete/noisy. We emulate this by:
+- gravity causes matter to cluster over time
+- PM captures large-scale clustering efficiently
+- FFT-based force computation is much faster than direct pairwise gravity
 
-- applying a rectangular mask
-- adding Gaussian noise
+### 4. What “observation model” means physically
 
-So the model learns to reconstruct under imperfect observations.
+Real measurements are never perfect. We mimic that with:
+
+- a **mask** (parts of space are unseen)
+- **noise** (measurement uncertainty)
+
+So the model learns under realistic constraints, not only clean simulated truth.
+
+### 5. What this toy model does and does not do
+
+It does:
+
+- capture core inverse-problem structure
+- provide a gradient-friendly forward pipeline
+- enable end-to-end reconstruction experiments
+
+It does not yet:
+
+- model full 3D cosmology
+- include baryonic/hydrodynamic effects
+- include full survey systematics
 
 ## Mathematics: What Objective We Optimize
 
-We frame reconstruction as MAP (Maximum A Posteriori) estimation.
+We treat reconstruction as a Bayesian inverse problem and solve it with MAP.
 
-### Posterior form
+### 1. Unknowns, knowns, and forward map
+
+- `theta`: unknown initial field we want to recover
+- `f(theta)`: forward physics simulator
+- `y`: observed data
+
+With noise and masking, conceptually:
+
+- `y ≈ M(f(theta)) + epsilon`
+
+where `M` is observation effects (mask/noise model), and `epsilon` is random noise.
+
+### 2. Bayesian view
+
+We want:
 
 - `P(theta | y) ∝ P(y | theta) * P(theta)`
 
-where:
+Meaning:
 
-- `theta` = initial field (unknown)
-- `y` = observed field (known)
+- `P(y | theta)` asks: does this candidate field explain observed data?
+- `P(theta)` asks: is this candidate field physically plausible?
 
-### Loss used in code
+### 3. MAP objective used in practice
 
-We minimize:
+MAP finds one best field (not the full uncertainty distribution) by minimizing:
 
-- data misfit term (how well prediction matches observation)
-- prior term (spectral regularization from power spectrum)
+- data term + prior term
 
-Equivalent intuition:
+In code-level form:
 
-- Fit the data
-- Do not fit impossible or extremely unlikely initial fields
+- `L(theta) = data_misfit(theta) + lambda * prior_penalty(theta)`
+
+Intuition:
+
+- data term: punish disagreement with observed field
+- prior term: punish unrealistic spectral content
+- `lambda`: trade-off knob between fitting data and staying plausible
+
+### 4. What the gradient means mathematically
+
+The gradient `dL/dtheta` tells us, for every cell in the initial field:
+
+- if we nudge this cell up/down, does the total loss improve?
+
+Then optimization repeats:
+
+1. compute gradient
+2. update `theta`
+3. recompute loss
+4. continue until improvement stalls
+
+### 5. Why this is better than naive guessing
+
+Naive search in high dimensions is expensive.
+Gradient information gives directed updates, which is why this approach is computationally practical.
 
 ## Computer Science and Software Engineering Role
 
-This project is not only physics. It is also a software system problem.
+Physics alone is not enough. This is also a numerical software engineering problem.
 
-### Key engineering requirements
+### 1. Why implementation quality matters
 
-- differentiable numerical operators
-- stable optimization (avoid NaNs/divergence)
-- reproducibility (configs + seeds)
-- automated tests
-- modular architecture for future 3D extension
+Even correct equations can fail in code if:
 
-### Why JAX
+- gradients explode or become NaN
+- optimization diverges
+- experiments are not reproducible
+- module boundaries are unclear
 
-JAX gives:
+So the project must be engineered for stability and repeatability, not only correctness on paper.
 
-- autodiff
-- fast array operations
-- JIT compilation
-- portable execution on CPU/GPU
+### 2. Why JAX is a strong fit
 
-### Current software architecture
+JAX provides:
 
-- functional modules with explicit inputs/outputs
-- minimal hidden state
-- config-driven experiments (`data/toy/config.yaml`)
-- script entrypoint (`scripts/run_toy_2d.py`)
+- automatic differentiation through simulation code
+- vectorized, efficient array operations
+- optional JIT compilation for speed
+- CPU/GPU portability with minimal code changes
+
+That makes it practical to combine physics simulation and gradient-based inference in one stack.
+
+### 3. How the repository is structured as a system
+
+- `fields.py`: initial condition generation
+- `pm.py`: forward dynamics
+- `observe.py`: measurement effects
+- `loss.py`: objective function
+- `inference.py`: optimizer loop
+- `utils.py`: shared analysis/spectral tools
+
+This modular design keeps responsibilities clear and helps future 3D extension.
+
+### 4. Reliability features already in the code
+
+The implementation includes practical safeguards such as:
+
+- gradient clipping
+- backtracking step-size control
+- early stopping
+- finite-value checks
+- deterministic seeds/config-driven runs
+
+These are standard numerical engineering tools to keep optimization stable.
+
+### 5. Why tests are central (not optional)
+
+Automated tests verify:
+
+- math kernels behave as expected
+- gradients are finite
+- reconstruction loop improves objective
+- end-to-end pipeline actually runs
+
+This reduces regressions as the codebase grows.
 
 ## Data Science and Analysis Role
 

@@ -36,7 +36,7 @@ Use this page as the entrypoint to the project docs.
 1. `docs/overview.md`
 2. `docs/architecture.md`
 3. `docs/validation.md`
-4. `docs/original_proposal`
+4. `docs/original_proposal` (archived context)
 
 ## Doc Purpose Quick Reference
 
