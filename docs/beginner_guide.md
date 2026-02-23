@@ -53,10 +53,10 @@ Initial Field (unknown) -> Forward Physics -> Observation Model -> Synthetic Obs
 
 ```mermaid
 flowchart LR
-    A[Initial Field\nunknown] --> B[Forward Model\nPM-lite]
-    B --> C[Observation Model\nmask + noise]
+    A[Initial Field unknown] --> B[Forward Model PM-lite]
+    B --> C[Observation Model mask plus noise]
     C --> D[Observed Field]
-    D --> E[Loss\n(data + prior)]
+    D --> E[Loss data plus prior]
     E --> F[Gradients]
     F --> G[Optimizer]
     G --> A
