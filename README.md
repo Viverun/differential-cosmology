@@ -1,207 +1,129 @@
 # Differentiable Cosmology: The Inverse Universe
 
-> 🚧 **Early Development** — 2D toy implementation in progress
+A research codebase for **field-level inverse cosmology**:
 
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+- Generate primordial density fields
+- Evolve them with a differentiable 2D PM-lite model
+- Build noisy/masked observations
+- Reconstruct initial conditions with gradient-based MAP inference
 
----
+The long-term goal is 3D differentiable reconstruction and posterior inference. The current codebase is a validated 2D MVP.
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                                                             │
-│   [Placeholder: Workflow diagram or example comparison]     │
-│                                                             │
-│   Initial Field → Forward Evolution → Observations          │
-│                         ↓                                   │
-│              Backprop & Reconstruct ←                       │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
+## Start Here First
 
-## What This Does
+If you are new to this topic, start with:
 
-**Differentiable cosmology** treats the universe's evolution as a differentiable function, enabling gradient-based inference of initial conditions from observations.
+- `docs/index.md` - visual documentation map with reading paths by skill level
 
-**Traditional approach:**  
-Guess initial conditions → simulate forward → compare to data → repeat millions of times
+Then read these two files:
 
-**This project:**  
-Observe the universe → backpropagate through simulation → infer initial conditions directly
+- `docs/beginner_guide.md` - full plain-language project walkthrough
+- `docs/keywords.md` - glossary of terms like `gradient`, `field-level`, `MAP`, and `power spectrum`
 
-Think of it as training a neural network where the "weights" are the primordial density fluctuations of the early universe.
+## What Has Been Implemented So Far
 
----
+### Core 2D pipeline
+- `fields.py`: Gaussian initial condition sampling with configurable power-law power spectrum.
+- `pm.py`: Differentiable 2D PM-lite evolution with
+  - lattice particles
+  - CIC deposit/interpolation
+  - FFT Poisson solve
+  - force-based updates with periodic boundaries.
+- `observe.py`: Observation model with rectangular survey masks and Gaussian noise.
+- `loss.py`: MAP objective = data misfit + spectral Gaussian prior.
+- `inference.py`: Adam-based MAP reconstruction with gradient clipping, backtracking, and early stopping.
+- `utils.py`: `compute_k_values`, radial power spectrum estimation, and cross-correlation diagnostics.
 
-## Why This Matters
+### Experiment and configuration
+- `scripts/run_toy_2d.py` runs the full end-to-end experiment and writes diagnostics/figures.
+- `data/toy/config.yaml` contains `default` and `debug` profiles.
 
-- 🎯 **Field-level inference** — reconstruct full density fields, not just summary statistics
-- 📈 **Gradient-based optimization** — orders of magnitude faster than forward sampling
-- 🧠 **Modern ML meets physics** — brings autodiff and learned samplers to cosmology
-- 🔬 **Better science** — richer constraints on cosmological parameters and uncertainties
+### Validation and tests
+- Unit tests now cover fields, PM, observation, loss, inference, and utility functions.
+- End-to-end smoke test added.
+- Current test status: `20 passed`.
 
----
+### Notebooks
+- `notebooks/00_toy_2d_forward.ipynb`
+- `notebooks/01_toy_2d_inverse.ipynb`
+- `notebooks/utils.ipynb`
 
-## Quick Start
+### Visual example output
+- `docs/assets/toy2d_summary_example.png` (generated from `scripts/run_toy_2d.py`)
 
-### Installation
+## Why This Project Matters
+
+Traditional cosmology workflows rely heavily on repeated forward simulations. This project explores a differentiable alternative:
+
+1. Build a differentiable forward model.
+2. Backpropagate through physics.
+3. Infer initial conditions directly with gradients.
+
+This opens a practical path to faster and richer field-level inference.
+
+## Quick Start (`uv`)
 
 ```bash
-# Requirements: Python 3.9+, JAX
-git clone https://github.com/yourusername/differentiable-cosmology.git
+git clone <your-repo-url>
 cd differentiable-cosmology
-pip install -e .
+
+# Create or activate your project environment
+uv venv .venv --python 3.11
+source .venv/bin/activate
+
+# Sync dependencies from pyproject (dev tools included)
+uv sync --active --extra dev
+
+# Run tests
+uv run --active pytest -q
+
+# Run toy experiment
+uv run --active python scripts/run_toy_2d.py --profile default
 ```
 
-### Run the 2D Toy Example
-
-```bash
-python scripts/run_toy_2d.py
-```
-
-**Expected output:** Plots showing forward evolution and gradient-based reconstruction of initial density field.
-
-### Interactive Notebooks
-
-Explore step-by-step:
-- `notebooks/00_toy_2d_forward.ipynb` — Generate and evolve initial conditions
-- `notebooks/01_toy_2d_inverse.ipynb` — Reconstruct via gradient descent
-
-**→ New here?** See [**docs/getting_started.md**](docs/getting_started.md) for a complete hands-on tutorial.
-
----
-
-## Prerequisites
-
-**Ready to dive in?** Check [**PREREQUISITES.md**](PREREQUISITES.md) for a detailed guide on required knowledge and learning resources.
-
-**TL;DR:** You should be comfortable with:
-- Python and NumPy
-- Basic calculus (derivatives, gradients)
-- Fourier transforms (conceptually)
-- Basic cosmology or willingness to learn
-
-**New to some of these?** The prerequisites doc includes a learning roadmap and resources to get you started!
-
----
-
-## Features
-
-- ✅ 2D differentiable particle-mesh simulation (3D in progress)
-- ✅ Gaussian initial conditions with power spectrum priors
-- ✅ MAP inference via gradient-based optimization
-- 🚧 Posterior sampling (flows/score models)
-- 🚧 Realistic observation models
-
----
-
-## Goals
-
-Build differentiable cosmological forward models, demonstrate gradient-based MAP reconstruction, enable posterior inference with learned samplers, and provide reproducible experiments with clear validation.
-
----
+Outputs are written under `outputs/toy2d/` by default.
 
 ## Documentation
 
-**New to the project?** → Start with [**docs/getting_started.md**](docs/getting_started.md) for a hands-on tutorial
+Start here based on your background:
 
-**Want to contribute?** → See [**CONTRIBUTING.md**](CONTRIBUTING.md) for guidelines
-
-**Need more depth?**
-- [**PREREQUISITES.md**](PREREQUISITES.md) — Required knowledge and learning resources
-- [**docs/overview.md**](docs/overview.md) — Scientific and algorithmic foundations
-- [**docs/architecture.md**](docs/architecture.md) — Software design and code structure
-- [**docs/validation.md**](docs/validation.md) — Metrics and quality assurance
-
----
+- `docs/index.md` - visual docs map and recommended reading order
+- `docs/beginner_guide.md` - complete plain-language guide (physics, math, data, engineering, and roadmap)
+- `docs/keywords.md` - keyword glossary used throughout this project
+- `docs/faq.md` - quick newcomer Q&A
+- `docs/getting_started.md` - hands-on usage tutorial
+- `docs/overview.md` - technical overview
+- `docs/architecture.md` - software architecture and module structure
+- `docs/validation.md` - metrics and validation strategy
+- `docs/prerequisites.md` - background and learning resources
 
 ## Repository Structure
 
+```text
+src/diffcosmo/      Core library
+scripts/            Runnable scripts
+tests/              Unit + smoke tests
+notebooks/          Interactive examples
+data/               Configurations
+docs/               Documentation
 ```
-differentiable-cosmology/
-├── src/diffcosmo/    # Core library
-├── notebooks/        # Interactive tutorials
-├── scripts/          # CLI tools
-├── tests/            # Unit tests
-└── docs/             # Documentation
-```
 
-See [**docs/architecture.md**](docs/architecture.md) for detailed code structure.
+## Current Scope and Next Steps
 
----
+### In scope now
+- 2D differentiable toy reconstruction
+- MAP inference and diagnostics
+- Reproducible local experimentation
 
-## Validation
-
-We measure reconstruction quality using cross-correlation (target: r > 0.9), power spectrum recovery (<10% error), and stable optimization. See [**docs/validation.md**](docs/validation.md) for detailed metrics and testing strategy.
-
----
-
-## Roadmap
-
-**✅ Phase 0:** Setup — Repository scaffolding, 2D forward model  
-**🚧 Phase 1:** 2D Toy (Current) — Differentiable PM, reconstruction, validation  
-**📋 Phase 2:** 3D Realistic — Small volumes, observation models, MAP  
-**📋 Phase 3:** Posterior Inference — MCMC, flows, score models  
-**📋 Phase 4:** Scale & Realism — Larger volumes, baryonic physics, multi-GPU
-
----
-
-## Scope
-
-**In scope:** 2D/3D differentiable PM simulations, MAP reconstruction, posterior sampling methods, reproducible experiments.
-
-**Out of scope (MVP):** Full hydrodynamics, production-scale surveys, petabyte simulations.
-
-See [**docs/overview.md**](docs/overview.md) for complete scope and design decisions.
-
----
-
-## Who This Is For
-
-**Cosmologists** — Field-level inference tools  
-**ML Researchers** — Physics-informed differentiable simulation testbed  
-**Students** — Introduction to inverse problems in cosmology  
-**Engineers** — Scalable scientific software patterns
-
----
+### Next
+- Robust 3D extension on GPU
+- More realistic observation operators
+- Posterior sampling (MCMC / amortized methods)
 
 ## Contributing
 
-Contributions are welcome! See [**CONTRIBUTING.md**](CONTRIBUTING.md) for guidelines on code style, testing, and pull requests.
-
-**Good first areas:** Documentation, testing, utility functions, validation metrics.
-
----
-
-## Citation
-
-If you use this code in your research, please cite:
-
-```bibtex
-@software{differentiable_cosmology,
-  title = {Differentiable Cosmology: The Inverse Universe},
-  author = {Jamil Khan},
-  year = {2026},
-  url = {https://github.com/Viverun/differentiable-cosmology}
-}
-```
-
----
+See `CONTRIBUTING.md`.
 
 ## License
 
-This project is released under the [MIT License](LICENSE).
-
----
-
-## Contact & Support
-
-- **Issues:** [GitHub Issues](https://github.com/yourusername/differentiable-cosmology/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/yourusername/differentiable-cosmology/discussions)
-- **Email:** your.email@example.com
-
----
-
-## Acknowledgments
-
-Built on JAX-based cosmology tools (FlowPM, JaxPM) and field-level inference frameworks (BORG, ELUCID).
+MIT (`LICENSE`).

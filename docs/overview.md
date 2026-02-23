@@ -2,6 +2,8 @@
 
 This document provides technical depth on the architecture, algorithms, and design decisions behind the Differentiable Cosmology project. It's intended for contributors, advanced users, and researchers who want to understand or extend the system.
 
+If you are new to physics/math/data science, start with `docs/beginner_guide.md` and `docs/keywords.md` first, then come back to this file.
+
 ---
 
 ## Core Concept

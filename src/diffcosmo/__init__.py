@@ -2,6 +2,6 @@
 
 __version__ = "0.1.0"
 
-from . import utils
+from . import fields, inference, loss, observe, pm, utils
 
-__all__ = ["utils", "__version__"]
+__all__ = ["fields", "pm", "observe", "loss", "inference", "utils", "__version__"]

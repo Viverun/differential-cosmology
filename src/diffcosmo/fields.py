@@ -1,7 +1,11 @@
 """Initial condition generation."""
 
+from typing import Callable, Tuple
+
 import jax.numpy as jnp
-from typing import Callable
+import jax.random as random
+
+from diffcosmo.utils import compute_k_values
 
 
 def power_law_power_spectrum(
@@ -25,20 +29,35 @@ def power_law_power_spectrum(
     P_k : jnp.ndarray
         Power spectrum values
     """
-    return jnp.where(k > 0, amplitude * k**index, 0.0)
+    k_safe = jnp.where(k > 0, k, 1.0)
+    power = amplitude * k_safe**index
+    return jnp.where(k > 0, power, 0.0)
 
 
-if __name__ == "__main__":
-    from diffcosmo.utils import compute_k_values
-    import matplotlib.pyplot as plt
+def generate_gaussian_field(
+    grid_shape: Tuple[int, int],
+    power_spectrum_fn: Callable[[jnp.ndarray], jnp.ndarray],
+    seed: int,
+    dtype: jnp.dtype = jnp.float32,
+) -> jnp.ndarray:
+    """Generate a real Gaussian random field with target power spectrum.
 
-    k = compute_k_values((128, 128))
-    P_k = power_law_power_spectrum(k)
+    The method samples white noise in real space and filters in Fourier space
+    with sqrt(P(k)); inverse FFT yields a real field.
+    """
+    if len(grid_shape) != 2:
+        raise ValueError("generate_gaussian_field currently supports 2D grids only.")
 
-    plt.figure(figsize=(8, 6))
-    plt.hist(k.flatten(), bins=50, weights=P_k.flatten(), alpha=0.7)
-    plt.xlabel("k")
-    plt.ylabel("P(k)")
-    plt.title("Power Spectrum")
-    plt.savefig("power_spectrum_test.png")
-    print("✅ Created power_spectrum_test.png")
+    key = random.PRNGKey(seed)
+    white_noise = random.normal(key, shape=grid_shape, dtype=dtype)
+    white_k = jnp.fft.fftn(white_noise)
+
+    k_mag = compute_k_values(grid_shape)
+    power = jnp.maximum(power_spectrum_fn(k_mag), 0.0)
+    filter_amp = jnp.sqrt(power + 1e-8)
+
+    colored_k = white_k * filter_amp
+    field = jnp.real(jnp.fft.ifftn(colored_k)).astype(dtype)
+    field = field - jnp.mean(field)
+    field = field / (jnp.std(field) + 1e-6)
+    return field

@@ -1,0 +1,66 @@
+profiles:
+  default:
+    grid_shape: [64, 64]
+    sim:
+      n_steps: 10
+      dt: 0.1
+      checkpointing: none
+      cosmology:
+        Omega_m: 0.3
+        init_disp_scale: 0.25
+        identity_mix: 0.85
+    prior:
+      amplitude: 1.0
+      index: -2.0
+      lambda_prior: 1.0e-2
+      eps: 1.0e-6
+    obs:
+      noise_std: 0.1
+      use_mask: true
+      mask_frac: 0.8
+      seed: 2
+    opt:
+      lr: 0.05
+      beta1: 0.9
+      beta2: 0.999
+      eps: 1.0e-8
+      max_iters: 300
+      early_stop_patience: 50
+      early_stop_min_delta: 1.0e-6
+    seeds:
+      truth: 0
+      init: 1
+
+  debug:
+    grid_shape: [32, 32]
+    sim:
+      n_steps: 6
+      dt: 0.1
+      checkpointing: none
+      cosmology:
+        Omega_m: 0.3
+        init_disp_scale: 0.2
+        identity_mix: 0.85
+    prior:
+      amplitude: 1.0
+      index: -2.0
+      lambda_prior: 1.0e-2
+      eps: 1.0e-6
+    obs:
+      noise_std: 0.1
+      use_mask: true
+      mask_frac: 0.8
+      seed: 2
+    opt:
+      lr: 0.05
+      beta1: 0.9
+      beta2: 0.999
+      eps: 1.0e-8
+      max_iters: 120
+      early_stop_patience: 30
+      early_stop_min_delta: 1.0e-6
+    seeds:
+      truth: 0
+      init: 1
+
+active_profile: default
